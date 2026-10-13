@@ -31,16 +31,31 @@ interface ApiResult {
 }
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<ApiResult> {
-  const token = await getToken();
+  let token: string;
+  try {
+    token = await getToken();
+  } catch {
+    return { ok: false, status: 0, data: null, error: 'Not authenticated' };
+  }
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(options.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch {
+    // Network error, DNS failure, CORS blocked, etc.
+    return {
+      ok: false,
+      status: 0,
+      data: null,
+      error: 'Unable to connect to the booking service. Please try again.',
+    };
+  }
 
   // Safely parse the response body — may be empty or non-JSON.
   let data: unknown = null;

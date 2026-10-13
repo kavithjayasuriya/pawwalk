@@ -102,22 +102,29 @@ export function BookingWizard({
       idempotencyKeyRef.current = crypto.randomUUID();
     }
 
-    const result = await createBookingViaPython({
-      service_id: selectedServiceId!,
-      dog_ids: selectedDogIds,
-      date: selectedDate!,
-      time: selectedTime!,
-      pickup_address: pickupAddress,
-      pickup_notes: pickupNotes || null,
-      idempotency_key: idempotencyKeyRef.current,
-    });
+    try {
+      const result = await createBookingViaPython({
+        service_id: selectedServiceId!,
+        dog_ids: selectedDogIds,
+        date: selectedDate!,
+        time: selectedTime!,
+        pickup_address: pickupAddress,
+        pickup_notes: pickupNotes || null,
+        idempotency_key: idempotencyKeyRef.current,
+      });
 
-    if ('error' in result) {
-      setError(result.error);
+      if ('error' in result) {
+        setError(result.error);
+      } else {
+        idempotencyKeyRef.current = null;
+        router.push(`/bookings/${result.bookingId}`);
+        return; // keep submitting=true during redirect
+      }
+    } catch {
+      // Network/CORS exception that escaped apiFetch
+      setError('Unable to connect to the booking service. Please try again.');
+    } finally {
       setSubmitting(false);
-    } else {
-      idempotencyKeyRef.current = null;
-      router.push(`/bookings/${result.bookingId}`);
     }
   }
 
