@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/lib/actions/auth';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -111,5 +111,20 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-lg border border-zinc-200 bg-white p-8 shadow-sm">
+          <h1 className="mb-6 text-2xl font-bold text-zinc-900">Log in</h1>
+          <div className="py-8 text-center text-sm text-zinc-400">Loading…</div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
